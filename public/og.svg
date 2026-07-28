@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#f8ead5"/>
+      <stop offset="0.5" stop-color="#e9f2e7"/>
+      <stop offset="1" stop-color="#b7d9d0"/>
+    </linearGradient>
+    <linearGradient id="sea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3f8e82"/>
+      <stop offset="1" stop-color="#175a55"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="630" rx="42" fill="url(#sky)"/>
+  <circle cx="1020" cy="112" r="58" fill="#ef795f" opacity=".9"/>
+  <path d="M0 430 C180 360 350 500 560 418 C770 335 930 470 1200 350 V630 H0Z" fill="url(#sea)"/>
+  <path d="M0 487 C215 415 370 558 585 465 C790 378 1000 525 1200 425" fill="none" stroke="#f8ead5" stroke-width="13" opacity=".75"/>
+  <g fill="#194b46">
+    <text x="86" y="150" font-size="34" font-family="system-ui, sans-serif" letter-spacing="8">DALIAN → SHENYANG</text>
+    <text x="82" y="270" font-size="86" font-weight="700" font-family="system-ui, sans-serif">从海风到盛京</text>
+    <text x="88" y="342" font-size="39" font-family="system-ui, sans-serif">大连 → 沈阳 · 4日慢游</text>
+  </g>
+  <g transform="translate(860 255)" fill="none" stroke="#194b46" stroke-width="11" stroke-linecap="round">
+    <path d="M0 130 C35 45 75 0 130 0 C185 0 225 45 260 130"/>
+    <path d="M36 130 V48 M224 130 V48"/>
+    <path d="M16 130 H244"/>
+  </g>
+  <g fill="#fff4df" font-family="system-ui, sans-serif" font-size="30">
+    <text x="82" y="570">海岸线 · 西塔 · 甜品 · 洗浴</text>
+  </g>
+</svg>
