@@ -2,9 +2,34 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+type City = "大连" | "沈阳";
+type Section = "plan" | "map" | "food" | "bath" | "list";
+
+type Stop = {
+  time: string;
+  kind: "早餐" | "午餐" | "晚餐" | "甜品" | "游玩" | "交通" | "住宿";
+  place: string;
+  city?: City;
+  order?: string;
+  detail: string;
+  duration: string;
+  tags?: string[];
+};
+
+type Day = {
+  id: string;
+  date: string;
+  weekday: string;
+  city: string;
+  title: string;
+  subtitle: string;
+  tip: string;
+  stops: Stop[];
+};
+
 type Place = {
   id: string;
-  city: "大连" | "沈阳";
+  city: City;
   name: string;
   short: string;
   type: string;
@@ -14,110 +39,133 @@ type Place = {
   order: number;
 };
 
-type Stop = {
-  time: string;
-  place: string;
-  detail: string;
-  duration: string;
-  tags?: string[];
-  food?: string;
-};
+const days: Day[] = [
+  {
+    id: "d1", date: "8/4", weekday: "周二", city: "大连", title: "落地星海，慢慢追日落", subtitle: "入住后只走西海岸，不跨区",
+    tip: "日月昇午餐分量大，两人点 3 道足够；当天日落时间出发前再看一次。",
+    stops: [
+      { time: "12:00", kind: "住宿", place: "抵达大连 · 入住星海广场", detail: "放行李、补水休息。华住会优先看星海广场漫心、全季星海会展中心；旺季房价波动大，尽早锁可取消价。", duration: "1h", tags: ["华住会", "行李"] },
+      { time: "13:15", kind: "午餐", place: "日月昇渔家菜（星海公园店）", order: "海肠捞饭＋鲅鱼水饺＋软炸肉", detail: "就在住宿片区解决第一顿，海肠捞饭在这里吃最顺路。连锁老店、菜量大，口味稳定度比“专程追小馆”更适合落地日。", duration: "1.5h", tags: ["必吃", "人均约 ¥90–130"] },
+      { time: "15:10", kind: "游玩", place: "付家庄海滨浴场", detail: "海边慢走，作为旅程开场；天气闷热就把停留压缩到 40 分钟。", duration: "50m", tags: ["看海"] },
+      { time: "16:20", kind: "游玩", place: "莲花山观景台", detail: "坐缆车俯瞰星海湾。大风停运或排队超过 40 分钟，直接跳过不影响后面日落。", duration: "1.2h", tags: ["缆车", "可跳过"] },
+      { time: "18:00", kind: "游玩", place: "银沙滩 → 跨海大桥观景点", detail: "银沙滩拍照后前往大桥观景点，至少在日落前 40 分钟抵达。", duration: "2h", tags: ["日落重点"] },
+      { time: "20:20", kind: "晚餐", place: "喜鼎海胆水饺（星海店）", order: "海胆水饺＋三鲜焖子；午餐吃撑则只点一份水饺", detail: "离住处近，晚归不用再横穿市区。它偏精致和游客友好，价格高于普通饺子馆，建议少点。", duration: "1h", tags: ["顺路", "人均约 ¥90–150"] },
+    ],
+  },
+  {
+    id: "d2", date: "8/5", weekday: "周三", city: "大连", title: "东海岸、老街与港口夜", subtitle: "从菱角湾一路向北收尾东港",
+    tip: "亚桥咖喱的分量偏实在；晚上日丰园不要重复点普通海鲜，重点吃海肠水饺。",
+    stops: [
+      { time: "08:00", kind: "早餐", place: "酒店早餐", order: "粥／面＋鸡蛋，别吃太撑", detail: "今天海边步行多，早餐在酒店解决最省时间。", duration: "40m", tags: ["省时"] },
+      { time: "09:00", kind: "游玩", place: "菱角湾 → 渔人码头", detail: "先拍老虎滩彩色建筑，再去渔人码头看灯塔和渔船；两处顺路，不来回折返。", duration: "3h", tags: ["海岸", "拍照"] },
+      { time: "12:30", kind: "午餐", place: "亚桥咖喱（中山区门店）", order: "炸鸡排咖喱饭／芝士咖喱饭，辣度保守选", detail: "经营年头久、咖喱浓郁，属于大连本地年轻人会反复吃的类型。不是地方菜，但如果喜欢日式咖喱，值得安排一顿。", duration: "1.2h", tags: ["值得吃", "人均约 ¥35–55"] },
+      { time: "14:10", kind: "游玩", place: "南山风情街 · 七七街", detail: "咖啡、老洋房和树荫街道，下午走起来比正午海边舒服。", duration: "2h", tags: ["Citywalk"] },
+      { time: "16:40", kind: "游玩", place: "东港 → 威尼斯水城", detail: "先走港浦路海边，傍晚再进水城；亮灯后看一圈即可，不必久留。", duration: "2.5h", tags: ["夜景"] },
+      { time: "19:30", kind: "晚餐", place: "日丰园海肠水饺", order: "海肠水饺＋黄花鱼丸汤＋时令小菜", detail: "大连代表性很强的一顿，和中午咖喱不重复；热门时先线上取号。", duration: "1.5h", tags: ["必吃", "人均约 ¥80–120"] },
+      { time: "21:10", kind: "甜品", place: "元叶丰茶", order: "酒酿米麻薯／厚蛋糕奶茶二选一", detail: "只当饭后甜品，不要把大杯奶茶当水喝。", duration: "35m", tags: ["可选"] },
+    ],
+  },
+  {
+    id: "d3", date: "8/6", weekday: "周四", city: "大连", title: "本地胃的一天", subtitle: "黑石礁、老电车与市中心慢走",
+    tip: "鳗乐道不是大连特色，只有真想吃日料自助才保留；否则换成品海楼或附近大连老菜。",
+    stops: [
+      { time: "08:30", kind: "早餐", place: "天颜过桥米线", order: "鸡肉砂锅米线＋卤蛋，先尝原汤再加辣", detail: "老牌米线、汤底浓，网上口碑长期稳定。早午餐吃最合适，避开正午排队。", duration: "1h", tags: ["值得吃", "人均约 ¥20–35"] },
+      { time: "10:00", kind: "游玩", place: "黑石礁海岸 → 大连自然博物馆", detail: "海边与室内组合，8 月中午前完成户外部分；博物馆遇预约限制就只走海岸。", duration: "2h", tags: ["雨天也可"] },
+      { time: "12:40", kind: "午餐", place: "鳗乐道 · 活鳗料理", order: "活烤鳗鱼＋三文鱼＋甜虾；少拿炸物", detail: "优势是约 200 元档自助选择多，不足是并非大连独有、容易占掉两小时。想吃就安排这天，不想吃可直接替换。", duration: "2h", tags: ["有条件推荐", "约 ¥194–218"] },
+      { time: "15:20", kind: "游玩", place: "201 路有轨电车 → 劳动公园", detail: "坐一小段老电车感受城市，再进公园散步；不是硬核景点，节奏松。", duration: "1.8h", tags: ["城市体验"] },
+      { time: "17:30", kind: "游玩", place: "中山广场 → 港东五街", detail: "看老建筑，再到港东五街等轮船与城市同框；没有大船就当普通海边散步。", duration: "1.5h", tags: ["顺路"] },
+      { time: "19:30", kind: "晚餐", place: "品海楼（中山区门店）", order: "海菜包子＋老板鱼炖豆腐＋一道时蔬", detail: "补一顿大连家常海鲜，菜量不小；两个人不要再点海鲜大拼盘。", duration: "1.3h", tags: ["大连老菜", "人均约 ¥90–140"] },
+    ],
+  },
+  {
+    id: "d4", date: "8/7", weekday: "周五", city: "大连 → 沈阳", title: "中午转场，晚上吃西塔", subtitle: "订到沈阳站比沈阳北站更省事",
+    tip: "中午在高铁上吃轻食是刻意留胃；西塔正餐＋甜品很容易超量。",
+    stops: [
+      { time: "08:00", kind: "早餐", place: "酒店早餐", order: "面／粥＋水果", detail: "退房日不额外追店，把时间留给海边和交通。", duration: "40m", tags: ["省时"] },
+      { time: "09:00", kind: "游玩", place: "星海广场晨走", detail: "百年城雕、海边栈道慢走一圈，回酒店取行李。", duration: "1h", tags: ["住处旁"] },
+      { time: "10:20", kind: "交通", place: "前往大连北站", detail: "打车预留 50–60 分钟，目标车次约 11:30 发车、13:30 前抵达。", duration: "3h", tags: ["高铁"] },
+      { time: "12:00", kind: "午餐", place: "高铁轻食", order: "饭团／三明治＋无糖饮料", detail: "这一顿故意吃轻，为西塔晚餐留胃。", duration: "30m", tags: ["交通餐"] },
+      { time: "14:10", kind: "住宿", place: "沈阳站 · 太原街附近入住", city: "沈阳", detail: "华住会优先看沈阳站、太原街、西塔三角区；后面去铁西和西塔都方便。", duration: "1h", tags: ["华住会"] },
+      { time: "16:00", kind: "甜品", place: "Just Start Coffee（西塔）", city: "沈阳", order: "黑芝麻维也纳／黑芝麻雪冰", detail: "来自你给的西塔咖啡笔记线索，院落氛围感强；营业时间出发前再核对。", duration: "1.2h", tags: ["小红书线索"] },
+      { time: "18:00", kind: "晚餐", place: "西塔大冷面＋泥炉烤肉", city: "沈阳", order: "大冷面＋烤牛肉／五花肉＋拌花菜", detail: "先吃冷面再烤肉，两人不要再点参鸡汤；餐后到师任堂或韩百买一份打糕。", duration: "2.2h", tags: ["必去", "人均约 ¥100–160"] },
+    ],
+  },
+  {
+    id: "d5", date: "8/8", weekday: "周六", city: "沈阳", title: "铁西街区与甜品巡游", subtitle: "不逛景点，只逛店、喝咖啡",
+    tip: "甜品店当天只选 1–2 家。杨草莓熊视频有较强种草属性，但店名、营业状态要按视频和地图当天复核。",
+    stops: [
+      { time: "09:00", kind: "早餐", place: "老四季抻面", order: "小碗抻面＋鸡架＋榨菜", detail: "沈阳经典早餐，鸡架掰碎拌醋和辣椒；一人半个鸡架足够。", duration: "1h", tags: ["沈阳味", "人均约 ¥20–30"] },
+      { time: "10:30", kind: "游玩", place: "铁西 Citywalk", detail: "从红梅文创园一带开始，按咖啡、杂货店密度慢走；不专门参观展馆。", duration: "2h", tags: ["低景点密度"] },
+      { time: "12:40", kind: "午餐", place: "金多咖喱", order: "欧姆蛋芝士咖喱／汉堡排咖喱", detail: "与铁西路线顺路，吃完再走咖啡店；和大连亚桥同类，若不想两次咖喱可换鸡架饭。", duration: "1h", tags: ["顺路", "人均约 ¥40–60"] },
+      { time: "14:00", kind: "甜品", place: "杨草莓熊沈阳甜品线", order: "优先照视频当期单品点，不盲点整柜", detail: "已确认杨草莓熊 2026-02-18 发布沈阳甜品视频；评论区同城补充有安仔和莎窝、MISS C。主推荐店名请临行前按视频内字幕复核。", duration: "2h", tags: ["杨草莓熊", "重点核验"] },
+      { time: "17:00", kind: "游玩", place: "太原街 · 青年大街商圈", detail: "逛商场、买伴手礼、回酒店休息，不安排故宫和大帅府。", duration: "2h", tags: ["逛街"] },
+      { time: "19:30", kind: "晚餐", place: "群乐饭店", order: "锅包肉＋熘肝尖＋一份青菜", detail: "老沈阳家常菜，锅包肉趁热吃；两人两荤一素已经很多。排队太长则就近换东北家常菜。", duration: "1.3h", tags: ["东北菜", "人均约 ¥60–90"] },
+    ],
+  },
+  {
+    id: "d6", date: "8/9", weekday: "周日", city: "沈阳", title: "早市、咖啡与留白", subtitle: "给最后一天洗浴留体力",
+    tip: "如果 8 月 10 日返京时间早于 19:30，把洗浴整段提前到今天 13:00。",
+    stops: [
+      { time: "08:00", kind: "早餐", place: "小河沿早市", order: "羊汤／馅饼＋油梭子火烧，边走边吃", detail: "属于生活体验而不是景点；周末人多，贵重物品放身前。", duration: "1.5h", tags: ["早市", "人均约 ¥25–45"] },
+      { time: "10:30", kind: "游玩", place: "浑河边慢走", detail: "天气不热就走一段，太晒直接换商场或咖啡馆。", duration: "1.2h", tags: ["留白"] },
+      { time: "12:30", kind: "午餐", place: "宝发园名菜馆", order: "四绝菜里选 2 道＋米饭", detail: "补一顿辽菜，菜量大；不为历史打卡，只为吃饭。", duration: "1.3h", tags: ["辽菜", "人均约 ¥80–120"] },
+      { time: "14:30", kind: "甜品", place: "安仔和莎窝／MISS C（二选一）", order: "胡椒可可或苹果派；MISS C 选红丝绒／蒙布朗", detail: "这两家来自杨草莓熊沈阳视频评论区的高赞同城补充，不冒充博主本人推荐；选离当日位置近的一家。", duration: "1.3h", tags: ["评论区线索"] },
+      { time: "17:00", kind: "游玩", place: "回酒店休息 · 整理行李", detail: "预先把洗浴过夜包和返京行李分开，明天退房后直接走。", duration: "1.5h", tags: ["整理"] },
+      { time: "19:00", kind: "晚餐", place: "西塔参鸡汤", order: "参鸡汤＋海鲜饼，两人可共用一份饼", detail: "最后补西塔遗漏的一顿，口味与前一天东北菜错开。", duration: "1.3h", tags: ["暖胃", "人均约 ¥80–120"] },
+    ],
+  },
+  {
+    id: "d7", date: "8/10", weekday: "周一", city: "沈阳 → 北京", title: "最后泡进澡堂，再回北京", subtitle: "默认选择 20:30 后返京车次",
+    tip: "这是按晚班高铁设计的默认方案。若返京更早，网页“洗浴”页里一键采用 8/9 提前版。",
+    stops: [
+      { time: "08:30", kind: "早餐", place: "酒店早餐", order: "粥／面＋鸡蛋，少油", detail: "退房、寄存或直接带行李去洗浴，提前电话确认大件行李存放。", duration: "50m", tags: ["退房"] },
+      { time: "10:00", kind: "交通", place: "前往沐里沐外（天惠国际店）", detail: "相比清河半岛更适合返京日，离市区和交通枢纽更容易控制时间。", duration: "45m", tags: ["主方案"] },
+      { time: "11:00", kind: "游玩", place: "沐里沐外洗浴", detail: "洗澡 → 搓澡 → 泡池 → 汗蒸 → 午餐 → 午睡。门票、搓澡和餐饮通常分开计价，以当日团购为准。", duration: "6h", tags: ["必去", "最后一站"] },
+      { time: "12:30", kind: "午餐", place: "洗浴内午餐", order: "东北菜／简餐＋水果，不点过量", detail: "先吃正餐再休息，避免只吃免费水果。", duration: "1h", tags: ["馆内解决"] },
+      { time: "17:00", kind: "晚餐", place: "洗浴内轻食", order: "面／饺子，赶车则打包", detail: "17:30 前结账离场，按沈阳站车次至少预留 2 小时。", duration: "45m", tags: ["返京前"] },
+      { time: "18:00", kind: "交通", place: "前往沈阳站 · 返回北京", detail: "建议 20:30 后车次；若从沈阳北站出发，再多留 20–30 分钟。", duration: "3h+", tags: ["返京"] },
+    ],
+  },
+];
 
 const places: Place[] = [
-  { id: "xinghai", city: "大连", name: "星海广场", short: "星海", type: "住宿", x: 38, y: 72, note: "住宿核心区，D3 清晨散步最舒服。", order: 1 },
-  { id: "fujiazhuang", city: "大连", name: "付家庄海滨浴场", short: "付家庄", type: "海岸", x: 52, y: 65, note: "第一天下午从这里开始沿海慢走。", order: 2 },
-  { id: "lianhuashan", city: "大连", name: "莲花山观景台", short: "莲花山", type: "观景", x: 44, y: 52, note: "缆车遇大风可能停运，晚到可跳过。", order: 3 },
-  { id: "yinshatan", city: "大连", name: "银沙滩", short: "银沙滩", type: "海岸", x: 59, y: 77, note: "安静、适合拍照，日落前离开去桥景点。", order: 4 },
-  { id: "bridge", city: "大连", name: "星海湾跨海大桥观景点", short: "大桥日落", type: "日落", x: 49, y: 86, note: "建议日落前 40 分钟到。", order: 5 },
-  { id: "lingjiao", city: "大连", name: "菱角湾", short: "菱角湾", type: "海岸", x: 73, y: 45, note: "定位背光咖啡，附近小路看老虎滩彩色建筑。", order: 1 },
-  { id: "fisher", city: "大连", name: "渔人码头", short: "渔人码头", type: "码头", x: 80, y: 52, note: "灯塔、渔船和老建筑，上午光线更好。", order: 2 },
-  { id: "hupo", city: "大连", name: "琥珀湾", short: "琥珀湾", type: "海岸", x: 86, y: 43, note: "风大时缩短停留，沿海散步即可。", order: 3 },
-  { id: "donggang", city: "大连", name: "东港·威尼斯水城", short: "东港", type: "夜景", x: 86, y: 23, note: "傍晚到，亮灯后离开。", order: 4 },
-  { id: "dalianbei", city: "大连", name: "大连北站", short: "大连北", type: "交通", x: 50, y: 10, note: "从星海广场出发预留 45–60 分钟。", order: 6 },
-  { id: "xita", city: "沈阳", name: "西塔街", short: "西塔", type: "美食", x: 34, y: 44, note: "冷面、烤肉、参鸡汤和韩国超市集中在这里。", order: 1 },
-  { id: "juststart", city: "沈阳", name: "Just Start 咖啡", short: "Just Start", type: "甜品", x: 29, y: 38, note: "黑芝麻维也纳、黑芝麻雪冰、薄巧小房子。", order: 2 },
-  { id: "palace", city: "沈阳", name: "沈阳故宫", short: "故宫", type: "人文", x: 63, y: 51, note: "D4 上午主行程，建议开门后尽早进入。", order: 1 },
-  { id: "zhang", city: "沈阳", name: "张学良旧居", short: "大帅府", type: "人文", x: 68, y: 58, note: "与故宫步行衔接，不想连逛可跳过。", order: 2 },
-  { id: "zhongjie", city: "沈阳", name: "中街", short: "中街", type: "街区", x: 72, y: 45, note: "午餐和买伴手礼，别吃太撑。", order: 3 },
-  { id: "qinghe", city: "沈阳", name: "清河半岛温泉", short: "清河半岛", type: "洗浴", x: 78, y: 13, note: "最终站，至少留 5–6 小时；返程预留交通时间。", order: 4 },
-  { id: "ciwei", city: "沈阳", name: "刺猬咖啡", short: "刺猬咖啡", type: "替换", x: 23, y: 62, note: "铁西替换线第一站：季节特调、花椒司康。", order: 1 },
-  { id: "jinduo", city: "沈阳", name: "金多咖喱", short: "金多咖喱", type: "替换", x: 17, y: 68, note: "欧姆蛋芝士咖喱，距刺猬咖啡步行约 10 分钟。", order: 2 },
-  { id: "xingxing", city: "沈阳", name: "星星商店", short: "星星商店", type: "替换", x: 13, y: 73, note: "饰品、帽子和玩偶，离金多咖喱很近。", order: 3 },
+  { id: "xinghai", city: "大连", name: "星海广场", short: "住·星海", type: "住宿", x: 33, y: 76, note: "三晚住宿核心，连接西海岸与地铁。", order: 1 },
+  { id: "riyue", city: "大连", name: "日月昇渔家菜（星海公园店）", short: "日月昇", type: "午餐", x: 26, y: 67, note: "落地第一顿，海肠捞饭最顺路。", order: 2 },
+  { id: "sunset", city: "大连", name: "跨海大桥观景点", short: "日落", type: "风景", x: 45, y: 84, note: "8 月日落前 40 分钟抵达。", order: 3 },
+  { id: "fisher", city: "大连", name: "渔人码头", short: "渔人码头", type: "海岸", x: 77, y: 55, note: "与菱角湾连续安排。", order: 4 },
+  { id: "nanshan", city: "大连", name: "南山风情街", short: "南山", type: "街区", x: 66, y: 45, note: "午后树荫 Citywalk。", order: 5 },
+  { id: "donggang", city: "大连", name: "东港·威尼斯水城", short: "东港", type: "夜景", x: 83, y: 25, note: "亮灯后离开，晚餐接日丰园。", order: 6 },
+  { id: "xita", city: "沈阳", name: "西塔街", short: "西塔", type: "美食", x: 30, y: 43, note: "8/7 主线：咖啡、冷面、烤肉和打糕。", order: 1 },
+  { id: "tiexi", city: "沈阳", name: "铁西 Citywalk", short: "铁西", type: "街区", x: 17, y: 65, note: "8/8 低景点密度闲逛。", order: 2 },
+  { id: "taiyuan", city: "沈阳", name: "太原街", short: "太原街", type: "住宿", x: 38, y: 53, note: "建议住宿片区，往返西塔和车站方便。", order: 3 },
+  { id: "muli", city: "沈阳", name: "沐里沐外（天惠国际店）", short: "沐里沐外", type: "洗浴", x: 53, y: 77, note: "返京日首选，时间比远郊清河半岛更可控。", order: 4 },
+  { id: "qinghe", city: "沈阳", name: "清河半岛温泉", short: "清河半岛", type: "备选", x: 79, y: 18, note: "体量最大但较远，适合提前到 8/9 玩整天。", order: 5 },
 ];
 
-const days: { id: string; label: string; date: string; city: string; title: string; subtitle: string; stops: Stop[] }[] = [
-  {
-    id: "d1", label: "D1", date: "抵达日", city: "大连", title: "西海岸 · 追一场日落", subtitle: "慢慢走，不赶景点", stops: [
-      { time: "12:00", place: "抵达 & 入住星海广场", detail: "放行李、简单休整。午餐想吃当地代表可去喜鼎海胆水饺，热门时先取号。", duration: "2h", tags: ["入住", "午餐"], food: "海胆水饺 / 三鲜焖子" },
-      { time: "14:00", place: "付家庄海滨浴场", detail: "沿海边散步，作为第一天下午的轻松开场。", duration: "1h", tags: ["看海"] },
-      { time: "15:20", place: "莲花山观景台", detail: "坐缆车上山俯瞰海湾；晚到或大风停运就直接跳过。", duration: "1.2h", tags: ["缆车", "可跳过"] },
-      { time: "16:50", place: "银沙滩", detail: "海岸更安静，拍完照前往跨海大桥观景点。", duration: "50m", tags: ["拍照"] },
-      { time: "18:10", place: "跨海大桥观景点", detail: "按当天日落时间前移或后移，建议提前 40 分钟抵达。", duration: "1h", tags: ["日落", "重点"] },
-      { time: "20:00", place: "星海广场晚餐", detail: "海鲜烧烤或海肠捞饭，第一天不必再跨区。", duration: "1.5h", food: "海鲜烧烤 / 海肠捞饭" },
-    ],
-  },
-  {
-    id: "d2", label: "D2", date: "完整日", city: "大连", title: "东海岸 · 渔港与灯塔", subtitle: "从彩色海岸走到港口夜景", stops: [
-      { time: "08:30", place: "菱角湾", detail: "打车定位“背光咖啡”，从附近小路看老虎滩彩色建筑。", duration: "1.5h", tags: ["拍照", "看海"] },
-      { time: "10:30", place: "渔人码头", detail: "灯塔、渔船和老建筑；找间海景咖啡馆休息。", duration: "2h", tags: ["码头", "咖啡"] },
-      { time: "12:30", place: "海边午餐", detail: "可选阿水的生鱼饭；不吃生食就点炙烤鳗鱼饭，或就近吃海鲜家常菜。", duration: "1.5h", food: "生鱼饭 / 炙烤鳗鱼饭 / 海菜包子" },
-      { time: "14:30", place: "琥珀湾", detail: "继续沿海散步，风大时缩短停留。", duration: "1h", tags: ["松弛"] },
-      { time: "16:30", place: "东港 · 威尼斯水城", detail: "先走港浦路海边，再等水城亮灯。", duration: "3h", tags: ["夜景"] },
-      { time: "20:00", place: "元叶丰茶", detail: "把酒酿米麻薯当作饭后甜品，别和正餐顺序放反。", duration: "40m", food: "酒酿米麻薯 / 厚蛋糕奶茶" },
-    ],
-  },
-  {
-    id: "d3", label: "D3", date: "转场日", city: "大连 → 沈阳", title: "从海边醒来，去西塔吃饭", subtitle: "高铁优先选到沈阳站", stops: [
-      { time: "07:30", place: "星海广场晨走", detail: "百年城雕、海边栈道，避开旅行团。", duration: "1h", tags: ["清晨"] },
-      { time: "09:00", place: "前往大连北站", detail: "从星海出发预留 45–60 分钟，选 11:30–12:30 抵达沈阳站的车次。", duration: "3h", tags: ["高铁"] },
-      { time: "12:30", place: "沈阳站附近入住", detail: "建议住沈阳站—太原街—西塔区域，华住会筛选地铁 500 米内新店。", duration: "1h", tags: ["入住"] },
-      { time: "14:00", place: "西塔街 & 韩国超市", detail: "先逛西塔街、韩百商场，把正餐留到傍晚。", duration: "2h", tags: ["必去", "街区"] },
-      { time: "16:00", place: "Just Start 咖啡", detail: "院子适合下午拍照；临行前再核对地图定位和营业时间。", duration: "1.5h", tags: ["甜品"], food: "黑芝麻维也纳 / 黑芝麻雪冰" },
-      { time: "18:00", place: "西塔晚餐", detail: "冷面、烤肉、参鸡汤三选二，留一点胃给打糕。", duration: "2h", food: "西塔大冷面 / 泥炉烤肉 / 打糕" },
-    ],
-  },
-  {
-    id: "d4", label: "D4", date: "最后日", city: "沈阳", title: "盛京老城，最后泡进澡堂", subtitle: "洗浴至少留 5–6 小时", stops: [
-      { time: "09:00", place: "沈阳故宫", detail: "开门后尽早进入，逛核心建筑即可。", duration: "2h", tags: ["人文", "主线"] },
-      { time: "11:10", place: "张学良旧居", detail: "与故宫步行衔接；不想连续参观可以直接去中街。", duration: "1.2h", tags: ["可跳过"] },
-      { time: "12:30", place: "中街午餐", detail: "一道主食加一道小吃就够，下午洗浴不要吃太撑。", duration: "1.2h", food: "老边饺子 / 马家烧麦 / 鸡架" },
-      { time: "14:00", place: "前往清河半岛", detail: "从中街打车预留 40–60 分钟，行李提前确认寄存。", duration: "1h", tags: ["交通"] },
-      { time: "15:00", place: "清河半岛温泉洗浴", detail: "洗澡 → 搓澡 → 泡池 → 汗蒸 → 晚餐 → 休息。赶车至少提前 2.5–3 小时离开。", duration: "6h", tags: ["必去", "最终站"], food: "洗浴内晚餐" },
-    ],
-  },
+const foodReviews = [
+  { name: "日月昇渔家菜", score: "4.2", level: "值得吃", price: "¥90–130", area: "星海公园店", order: "海肠捞饭、鲅鱼水饺、软炸肉", verdict: "连锁但胜在顺路、菜量大、第一次吃大连家常海鲜不容易点偏。海鲜新鲜度可能随门店和时段波动。" },
+  { name: "天颜过桥米线", score: "4.3", level: "值得吃", price: "¥20–35", area: "选离黑石礁顺路门店", order: "鸡肉砂锅米线、卤蛋", verdict: "汤浓、性价比高，是本地日常型小吃；不用跨城专程追，但放在早餐非常合适。" },
+  { name: "亚桥咖喱", score: "4.5", level: "咖喱党必吃", price: "¥35–55", area: "中山区门店", order: "鸡排咖喱、芝士咖喱", verdict: "经营年头久，咖喱味浓且分量足。不是大连特色菜，但属于有城市记忆的本地小馆。" },
+  { name: "鳗乐道 · 活鳗料理", score: "3.7", level: "有条件推荐", price: "¥194–218", area: "以地图最新门店为准", order: "现烤鳗鱼、三文鱼、甜虾", verdict: "想吃日料自助就值；若旅行目标是大连特色，它会占掉一顿正餐和两小时，可替换为大连老菜。" },
+  { name: "日丰园海肠水饺", score: "4.6", level: "必吃", price: "¥80–120", area: "东港后顺路", order: "海肠水饺、黄花鱼丸汤", verdict: "辨识度高于普通海鲜店，建议优先保留。热门时排队明显，先取号再去附近散步。" },
+  { name: "Just Start Coffee", score: "4.1", level: "氛围优先", price: "¥35–65", area: "沈阳西塔", order: "黑芝麻维也纳、黑芝麻雪冰", verdict: "与西塔主线高度顺路，适合下午休息拍照；来自用户提供的小红书笔记线索。" },
 ];
 
-const alternatives = [
-  {
-    id: "tiexi",
-    title: "D4 上午 · 铁西 Citywalk",
-    weather: "咖啡店与街区",
-    replaces: "替换「故宫—大帅府—中街」",
-    accent: "amber",
-    stops: ["10:00 刺猬咖啡", "11:30 金多咖喱", "12:40 星星商店", "14:00 前往清河半岛"],
-    note: "适合对历史景点兴趣一般、想逛年轻街区的人。不要和故宫线硬塞在同一上午。",
-  },
-  {
-    id: "rainy",
-    title: "大连雨天 · 室内缓冲",
-    weather: "下雨 / 大风",
-    replaces: "替换 D2 海岸长走",
-    accent: "blue",
-    stops: ["自然博物馆", "黑石礁书店或咖啡", "东港商场", "雨停后星海广场"],
-    note: "大连海边大风时体验会明显下降，室内方案比硬走海岸更舒服。",
-  },
-  {
-    id: "shortbath",
-    title: "D4 · 市区洗浴版",
-    weather: "晚间赶车",
-    replaces: "替换远郊清河半岛",
-    accent: "green",
-    stops: ["故宫或铁西二选一", "市区午餐", "就近大型洗浴", "提前 2 小时去车站"],
-    note: "如果最后一天晚上较早离开，优先保证返程，不建议跨城去清河半岛。",
-  },
+const baths = [
+  { id: "muli", name: "沐里沐外", price: "¥228–288", score: 86, location: "浑南 · 市区相对近", vibe: "设计感、年轻、适合返京日", food: "餐饮另算为主", sleep: "可休息／是否过夜看票种", best: "本行程首选", accent: "coral" },
+  { id: "qinghe", name: "清河半岛", price: "¥238–298", score: 96, location: "沈北 · 距市区远", vibe: "体量最大、温泉度假感强", food: "套餐可能含餐，以团购为准", sleep: "适合整天或过夜", best: "8/9 提前版", accent: "blue" },
+  { id: "yongli", name: "永利汇", price: "¥258–300", score: 80, location: "市区 · 交通较方便", vibe: "传统高配洗浴、吃喝选择多", food: "自助／单点看票种", sleep: "休息区成熟", best: "市区稳妥备选", accent: "gold" },
 ];
 
-const checklist = ["身份证 / 车票", "充电宝与数据线", "舒适防滑鞋", "防晒与墨镜", "薄外套（海边风大）", "泳衣与换洗衣物", "洗浴过夜用品", "少量肠胃药"];
+const checklist = ["身份证与返京车票", "大连→沈阳高铁票", "华住会旺季可取消订单", "防晒、帽子、墨镜", "薄外套（海边晚风）", "防滑拖鞋／泳衣", "洗浴过夜小包", "充电宝与肠胃药"];
+
+const sources = [
+  { label: "杨草莓熊 · 沈阳甜品视频", href: "https://www.bilibili.com/video/BV1CVZtB8E6t/" },
+  { label: "杨草莓熊 · 大连面包视频", href: "https://www.bilibili.com/video/BV1bFreB1EjG/" },
+  { label: "大连松弛看海笔记", href: "http://xhslink.cn/o/4s4dVH6LrNC" },
+  { label: "西塔咖啡笔记", href: "http://xhslink.cn/o/8oQfRBslKxx" },
+  { label: "铁西 Citywalk 笔记", href: "http://xhslink.cn/o/38I8jRaYyLk" },
+];
 
 function navLink(name: string, city: string) {
   return `https://uri.amap.com/search?keyword=${encodeURIComponent(name)}&city=${encodeURIComponent(city)}&view=map`;
@@ -125,181 +173,184 @@ function navLink(name: string, city: string) {
 
 export default function Home() {
   const [activeDay, setActiveDay] = useState("d1");
-  const [section, setSection] = useState<"plan" | "map" | "swap" | "list">("plan");
-  const [mapCity, setMapCity] = useState<"大连" | "沈阳">("大连");
+  const [section, setSection] = useState<Section>("plan");
+  const [mapCity, setMapCity] = useState<City>("大连");
   const [selectedPlace, setSelectedPlace] = useState("xinghai");
   const [done, setDone] = useState<string[]>([]);
   const [saved, setSaved] = useState<string[]>([]);
   const [checked, setChecked] = useState<string[]>([]);
-  const [activeSwap, setActiveSwap] = useState<string | null>(null);
+  const [selectedBath, setSelectedBath] = useState("muli");
 
   useEffect(() => {
-    const read = (key: string) => JSON.parse(localStorage.getItem(key) || "[]");
-    setDone(read("trip-done"));
-    setSaved(read("trip-saved"));
-    setChecked(read("trip-checked"));
-    setActiveSwap(localStorage.getItem("trip-swap"));
+    let active = true;
+    queueMicrotask(() => {
+      if (!active) return;
+      const read = (key: string) => JSON.parse(localStorage.getItem(key) || "[]");
+      setDone(read("trip-2026-done"));
+      setSaved(read("trip-2026-saved"));
+      setChecked(read("trip-2026-checked"));
+      setSelectedBath(localStorage.getItem("trip-2026-bath") || "muli");
+    });
+    return () => { active = false; };
   }, []);
 
-  function persist(key: string, value: string[]) {
-    localStorage.setItem(key, JSON.stringify(value));
-  }
+  const day = days.find((item) => item.id === activeDay)!;
+  const totalStops = days.reduce((sum, item) => sum + item.stops.length, 0);
+  const progress = Math.round((done.length / totalStops) * 100);
+  const mapPlaces = useMemo(() => places.filter((place) => place.city === mapCity), [mapCity]);
+  const selected = places.find((place) => place.id === selectedPlace) || mapPlaces[0];
 
-  function toggleValue(value: string, values: string[], setter: (v: string[]) => void, key: string) {
-    const next = values.includes(value) ? values.filter((v) => v !== value) : [...values, value];
+  function toggle(value: string, values: string[], setter: (items: string[]) => void, key: string) {
+    const next = values.includes(value) ? values.filter((item) => item !== value) : [...values, value];
     setter(next);
-    persist(key, next);
+    localStorage.setItem(key, JSON.stringify(next));
   }
 
   function chooseDay(id: string) {
+    const next = days.find((item) => item.id === id)!;
     setActiveDay(id);
-    const day = days.find((item) => item.id === id)!;
-    setMapCity(day.city.includes("沈阳") && !day.city.startsWith("大连") ? "沈阳" : "大连");
+    setSection("plan");
+    setMapCity(next.city.includes("沈阳") && !next.city.startsWith("大连") ? "沈阳" : "大连");
   }
-
-  const day = days.find((item) => item.id === activeDay)!;
-  const mapPlaces = useMemo(() => places.filter((place) => place.city === mapCity), [mapCity]);
-  const selected = places.find((place) => place.id === selectedPlace) || mapPlaces[0];
-  const progress = Math.round((done.length / 21) * 100);
 
   return (
     <main className="app-shell">
       <header className="hero">
+        <div className="hero-glow" />
         <div className="hero-top">
-          <div className="eyebrow"><span /> 辽宁 · 4日慢游</div>
-          <button className="avatar-button" aria-label="旅行完成度"><b>{progress}%</b></button>
+          <span className="eyebrow"><i /> LIAONING · SUMMER 2026</span>
+          <button className="progress-orb" aria-label="旅行完成度"><b>{progress}%</b><small>完成</small></button>
         </div>
-        <h1>从海风里出发，<br /><em>泡进盛京的夜。</em></h1>
-        <div className="trip-meta">
-          <div><small>路线</small><strong>大连 → 沈阳</strong></div>
-          <i />
-          <div><small>节奏</small><strong>松弛不折返</strong></div>
-          <i />
-          <div><small>住宿</small><strong>星海广场</strong></div>
+        <div className="hero-copy">
+          <span>08.04 — 08.10</span>
+          <h1>海风作序，<br /><em>盛京收尾。</em></h1>
+          <p>大连 3 晚 · 沈阳 3 晚 · 7 天慢游</p>
+        </div>
+        <div className="route-ribbon">
+          <div><small>ARRIVE</small><strong>8/4 中午 · 大连</strong></div>
+          <i>→</i>
+          <div><small>TRANSFER</small><strong>8/7 中午 · 沈阳</strong></div>
+          <i>→</i>
+          <div><small>RETURN</small><strong>8/10 · 北京</strong></div>
         </div>
       </header>
 
       <section className="day-strip" aria-label="选择行程日期">
-        {days.map((item) => (
+        {days.map((item, index) => (
           <button key={item.id} className={activeDay === item.id ? "active" : ""} onClick={() => chooseDay(item.id)}>
-            <span>{item.label}</span><small>{item.date}</small>
+            <small>{item.weekday}</small><strong>{item.date}</strong><span>D{index + 1}</span>
           </button>
         ))}
       </section>
 
       {section === "plan" && (
-        <section className="content-section plan-section">
-          <div className="section-heading">
+        <section className="content-section">
+          <div className="day-intro">
             <div><span>{day.city}</span><h2>{day.title}</h2><p>{day.subtitle}</p></div>
-            <button className="map-jump" onClick={() => setSection("map")}>看地图 ↗</button>
+            <button onClick={() => setSection("map")}>路线图 <b>↗</b></button>
           </div>
           <div className="timeline">
             {day.stops.map((stop, index) => {
               const key = `${day.id}-${index}`;
+              const city = stop.city || (day.city.includes("沈阳") && !day.city.startsWith("大连") ? "沈阳" : "大连");
               return (
                 <article className={`stop-card ${done.includes(key) ? "completed" : ""}`} key={key}>
                   <div className="time-col"><strong>{stop.time}</strong><span>{stop.duration}</span></div>
-                  <div className="timeline-dot"><i /></div>
-                  <div className="stop-content">
-                    <div className="stop-top">
-                      <h3>{stop.place}</h3>
-                      <button aria-label="收藏地点" className={saved.includes(stop.place) ? "saved" : ""} onClick={() => toggleValue(stop.place, saved, setSaved, "trip-saved")}>♡</button>
-                    </div>
+                  <div className="timeline-pin"><i /></div>
+                  <div className="stop-body">
+                    <div className="stop-head"><span className={`kind ${stop.kind}`}>{stop.kind}</span><button aria-label={`收藏 ${stop.place}`} className={saved.includes(stop.place) ? "saved" : ""} onClick={() => toggle(stop.place, saved, setSaved, "trip-2026-saved")}>{saved.includes(stop.place) ? "♥" : "♡"}</button></div>
+                    <h3>{stop.place}</h3>
+                    {stop.order && <div className="order-box"><small>点单</small><b>{stop.order}</b></div>}
                     <p>{stop.detail}</p>
-                    {stop.food && <div className="food-note">⌁ {stop.food}</div>}
-                    <div className="tag-row">
-                      {stop.tags?.map((tag) => <span key={tag}>{tag}</span>)}
-                      <a href={navLink(stop.place, day.city.includes("沈阳") ? "沈阳" : "大连")} target="_blank" rel="noreferrer">导航</a>
-                      <button onClick={() => toggleValue(key, done, setDone, "trip-done")}>{done.includes(key) ? "已去 ✓" : "标记已去"}</button>
+                    <div className="card-actions">
+                      <div>{stop.tags?.map((tag) => <span key={tag}>{tag}</span>)}</div>
+                      <a href={navLink(stop.place, city)} target="_blank" rel="noreferrer">导航</a>
+                      <button onClick={() => toggle(key, done, setDone, "trip-2026-done")}>{done.includes(key) ? "已完成 ✓" : "完成"}</button>
                     </div>
                   </div>
                 </article>
               );
             })}
           </div>
-          <div className="day-tip"><b>今天的小提醒</b><p>{activeDay === "d1" ? "日落时间会随季节变化，出发当天把最后两站时间一起调整。" : activeDay === "d2" ? "海边大风时不要硬走全程，雨天方案已经放在「替换」里。" : activeDay === "d3" ? "订票优先到沈阳站，去西塔比沈阳北站更省时间。" : "洗浴放在最后一站，返程交通要倒推，别在里面睡过头。"}</p></div>
+          <aside className="day-tip"><span>NOTE</span><p>{day.tip}</p></aside>
         </section>
       )}
 
       {section === "map" && (
-        <section className="content-section map-section">
-          <div className="section-heading compact">
-            <div><span>ROUTE MAP</span><h2>点一下，看看在哪</h2></div>
-            <div className="city-toggle">
-              {(["大连", "沈阳"] as const).map((city) => <button key={city} className={mapCity === city ? "active" : ""} onClick={() => { setMapCity(city); setSelectedPlace(places.find((p) => p.city === city)!.id); }}>{city}</button>)}
-            </div>
+        <section className="content-section">
+          <div className="section-title"><span>ROUTE MAP</span><h2>不折返的方位图</h2><p>点击标记查看说明，实际出发用高德导航</p></div>
+          <div className="city-toggle">
+            {(["大连", "沈阳"] as City[]).map((city) => <button key={city} className={mapCity === city ? "active" : ""} onClick={() => { setMapCity(city); setSelectedPlace(places.find((place) => place.city === city)!.id); }}>{city}</button>)}
           </div>
           <div className={`route-map ${mapCity === "沈阳" ? "shenyang" : "dalian"}`}>
-            <div className="map-water">{mapCity === "大连" ? "黄 海" : "浑 河"}</div>
-            <div className="map-road road-a" /><div className="map-road road-b" /><div className="map-road road-c" />
+            <span className="map-water">{mapCity === "大连" ? "黄 海" : "浑 河"}</span>
+            <i className="road road-a" /><i className="road road-b" /><i className="road road-c" />
             {mapPlaces.map((place) => (
-              <button
-                key={place.id}
-                className={`map-marker ${selectedPlace === place.id ? "selected" : ""} ${place.type === "替换" ? "alternate" : ""}`}
-                style={{ left: `${place.x}%`, top: `${place.y}%` }}
-                onClick={() => setSelectedPlace(place.id)}
-                aria-label={place.name}
-              >
+              <button key={place.id} aria-label={place.name} className={`map-marker ${selected.id === place.id ? "selected" : ""}`} style={{ left: `${place.x}%`, top: `${place.y}%` }} onClick={() => setSelectedPlace(place.id)}>
                 <i>{place.order}</i><span>{place.short}</span>
               </button>
             ))}
-            <div className="map-compass">N<br /><i>↑</i></div>
+            <b className="compass">N<br />↑</b>
           </div>
-          <article className="place-sheet">
-            <div className="place-icon">{selected.type.slice(0, 1)}</div>
-            <div><small>{selected.city} · {selected.type}</small><h3>{selected.name}</h3><p>{selected.note}</p></div>
-            <a href={navLink(selected.name, selected.city)} target="_blank" rel="noreferrer">去导航</a>
-          </article>
-          <p className="map-disclaimer">示意图用于理解方位与路线顺序，实际导航请打开高德地图。</p>
+          <article className="place-sheet"><span>{selected.type.slice(0, 1)}</span><div><small>{selected.city} · {selected.type}</small><h3>{selected.name}</h3><p>{selected.note}</p></div><a href={navLink(selected.name, selected.city)} target="_blank" rel="noreferrer">导航</a></article>
         </section>
       )}
 
-      {section === "swap" && (
-        <section className="content-section swap-section">
-          <div className="section-heading"><div><span>PLAN B</span><h2>换条路线，也很好</h2><p>按天气、兴趣和返程时间替换</p></div></div>
-          <div className="swap-list">
-            {alternatives.map((item) => (
-              <article className={`swap-card ${item.accent} ${activeSwap === item.id ? "chosen" : ""}`} key={item.id}>
-                <div className="swap-label">{item.weather}</div>
-                <h3>{item.title}</h3>
-                <p className="replace-note">{item.replaces}</p>
-                <ol>{item.stops.map((stop) => <li key={stop}>{stop}</li>)}</ol>
-                <p>{item.note}</p>
-                <button onClick={() => { const next = activeSwap === item.id ? null : item.id; setActiveSwap(next); if (next) localStorage.setItem("trip-swap", next); else localStorage.removeItem("trip-swap"); }}>{activeSwap === item.id ? "已选用 · 取消" : "选用这个方案"}</button>
+      {section === "food" && (
+        <section className="content-section">
+          <div className="section-title"><span>EAT LIST</span><h2>值得吃，不为打卡绕路</h2><p>价格为近期人均参考，8 月旺季以门店当天为准</p></div>
+          <div className="food-grid">
+            {foodReviews.map((item) => (
+              <article className="food-card" key={item.name}>
+                <div className="food-top"><div><small>{item.area}</small><h3>{item.name}</h3></div><b>{item.score}</b></div>
+                <div className="food-meta"><span>{item.level}</span><span>{item.price}</span></div>
+                <div className="must-order"><small>建议点</small><strong>{item.order}</strong></div>
+                <p>{item.verdict}</p>
+                <a href={navLink(item.name, item.name.includes("Just") ? "沈阳" : "大连")} target="_blank" rel="noreferrer">打开地图 ↗</a>
               </article>
             ))}
           </div>
+          <div className="source-box"><span>杨草莓熊 & 参考链接</span><p>已确认两条 B 站公开视频；沈阳当期视频未在网页标题公开店名，因此没有把评论区店名冒充成博主推荐，临行前请按视频内字幕复核。</p>{sources.map((source) => <a key={source.href} href={source.href} target="_blank" rel="noreferrer">{source.label}<b>↗</b></a>)}</div>
+        </section>
+      )}
+
+      {section === "bath" && (
+        <section className="content-section">
+          <div className="section-title"><span>BATH LAB</span><h2>¥200–300 洗浴怎么选</h2><p>门票、搓澡、餐饮经常拆分售卖，以下按近期常见组合价估算</p></div>
+          <div className="bath-chart">
+            {baths.map((bath) => (
+              <button key={bath.id} className={`${bath.accent} ${selectedBath === bath.id ? "active" : ""}`} onClick={() => { setSelectedBath(bath.id); localStorage.setItem("trip-2026-bath", bath.id); }}>
+                <div><span>{bath.name}</span><strong>{bath.price}</strong></div>
+                <i><b style={{ width: `${bath.score}%` }} /></i>
+                <small>综合匹配 {bath.score}</small>
+              </button>
+            ))}
+          </div>
+          {baths.filter((bath) => bath.id === selectedBath).map((bath) => (
+            <article className="bath-detail" key={bath.id}>
+              <div className="bath-badge">{bath.best}</div><h3>{bath.name}</h3>
+              <dl><div><dt>位置</dt><dd>{bath.location}</dd></div><div><dt>氛围</dt><dd>{bath.vibe}</dd></div><div><dt>餐食</dt><dd>{bath.food}</dd></div><div><dt>休息</dt><dd>{bath.sleep}</dd></div></dl>
+              <a href={navLink(bath.name, "沈阳")} target="_blank" rel="noreferrer">去高德确认团购与营业时间 ↗</a>
+            </article>
+          ))}
+          <aside className="bath-plan"><span>默认方案</span><h3>8/10 沐里沐外 → 晚班高铁</h3><p>如果返京时间早于 19:30，把洗浴改到 8/9 13:00，并选清河半岛玩整天；不要在返京日硬冲远郊。</p></aside>
         </section>
       )}
 
       {section === "list" && (
-        <section className="content-section list-section">
-          <div className="section-heading"><div><span>BEFORE GO</span><h2>出发前，再看一眼</h2><p>{checked.length}/{checklist.length} 已准备</p></div></div>
-          <div className="progress-track"><i style={{ width: `${checked.length / checklist.length * 100}%` }} /></div>
-          <div className="checklist">
-            {checklist.map((item) => (
-              <label key={item} className={checked.includes(item) ? "checked" : ""}>
-                <input type="checkbox" checked={checked.includes(item)} onChange={() => toggleValue(item, checked, setChecked, "trip-checked")} />
-                <i>{checked.includes(item) ? "✓" : ""}</i><span>{item}</span>
-              </label>
-            ))}
-          </div>
-          <div className="saved-box">
-            <div><span>MY SAVES</span><h3>收藏地点</h3></div>
-            {saved.length ? <div className="saved-tags">{saved.map((item) => <button key={item} onClick={() => toggleValue(item, saved, setSaved, "trip-saved")}>{item} ×</button>)}</div> : <p>在行程卡片点 ♡，地点会保存在这里。</p>}
-          </div>
-          <div className="hotel-card">
-            <small>华住会住宿首选</small><h3>大连星海广场漫心酒店</h3><p>地铁和星海广场都方便；备选全季星海广场海景、全季星海会展中心。</p>
-            <a href="https://m.huazhu.com/huazhu-DALIAN" target="_blank" rel="noreferrer">去华住会查看房价 ↗</a>
-          </div>
+        <section className="content-section">
+          <div className="section-title"><span>BEFORE GO</span><h2>出发清单</h2><p>{checked.length}/{checklist.length} 已准备 · 收藏 {saved.length} 个地点</p></div>
+          <div className="check-progress"><i style={{ width: `${checked.length / checklist.length * 100}%` }} /></div>
+          <div className="checklist">{checklist.map((item) => <label key={item} className={checked.includes(item) ? "checked" : ""}><input type="checkbox" checked={checked.includes(item)} onChange={() => toggle(item, checked, setChecked, "trip-2026-checked")} /><i>{checked.includes(item) ? "✓" : ""}</i><span>{item}</span></label>)}</div>
+          <div className="saved-box"><span>MY SAVES</span><h3>收藏地点</h3>{saved.length ? <div>{saved.map((item) => <button key={item} onClick={() => toggle(item, saved, setSaved, "trip-2026-saved")}>{item} ×</button>)}</div> : <p>在日程卡片点 ♡，地点会保存在这里。</p>}</div>
+          <div className="hotel-box"><span>华住会建议</span><h3>大连住星海，沈阳住太原街</h3><p>大连保持原来的星海广场住宿最合理；沈阳选沈阳站—太原街—西塔三角区，去西塔、铁西和返京都顺。</p><a href="https://m.huazhu.com/" target="_blank" rel="noreferrer">去华住会查可取消价 ↗</a></div>
         </section>
       )}
 
-      <nav className="bottom-nav">
-        <button className={section === "plan" ? "active" : ""} onClick={() => setSection("plan")}><i>⌁</i><span>行程</span></button>
-        <button className={section === "map" ? "active" : ""} onClick={() => setSection("map")}><i>⌖</i><span>地图</span></button>
-        <button className={section === "swap" ? "active" : ""} onClick={() => setSection("swap")}><i>⇄</i><span>替换</span>{activeSwap && <b />}</button>
-        <button className={section === "list" ? "active" : ""} onClick={() => setSection("list")}><i>✓</i><span>清单</span></button>
+      <nav className="bottom-nav" aria-label="主要功能">
+        {([
+          ["plan", "⌁", "日程"], ["map", "⌖", "地图"], ["food", "◌", "吃喝"], ["bath", "♨", "洗浴"], ["list", "✓", "清单"],
+        ] as [Section, string, string][]).map(([id, icon, label]) => <button key={id} className={section === id ? "active" : ""} onClick={() => setSection(id)}><i>{icon}</i><span>{label}</span></button>)}
       </nav>
     </main>
   );

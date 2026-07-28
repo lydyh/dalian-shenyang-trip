@@ -5,14 +5,14 @@ const repoName = process.env.GITHUB_REPOSITORY?.split("/")[1];
 const basePath = repoName ? `/${repoName}` : "";
 
 export const metadata: Metadata = {
-  title: "从海风到盛京｜大连沈阳旅行手册",
-  description: "一份为手机准备的大连沈阳四日交互旅行攻略，包含路线地图、替换方案、导航和旅行清单。",
+  title: "海风作序，盛京收尾｜大连沈阳 7 日旅行手册",
+  description: "8 月 4 日至 10 日的大连沈阳手机旅行攻略：逐餐安排、顺路地图、甜品线索、洗浴对比和返京方案。",
   metadataBase: new URL("https://lydyh.github.io/dalian-shenyang-trip/"),
   icons: { icon: `${basePath}/favicon.svg` },
   openGraph: {
-    title: "从海风到盛京｜大连 → 沈阳 4日慢游",
-    description: "海岸线、西塔、特色美食、甜品与最后一天洗浴，一页随身查看。",
-    images: [`${basePath}/og.svg`],
+    title: "海风作序，盛京收尾｜大连 → 沈阳 7 日慢游",
+    description: "逐餐不绕路、甜品有出处、¥200–300 洗浴对比，一页随身查看。",
+    images: [`${basePath}/og.png`],
     locale: "zh_CN",
     type: "website",
   },
