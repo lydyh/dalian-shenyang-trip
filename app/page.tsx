@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 type City = "大连" | "沈阳";
-type Section = "plan" | "map" | "food" | "bath" | "list";
+type Section = "plan" | "map" | "food" | "swap" | "bath" | "list";
 
 type Stop = {
   time: string;
@@ -14,6 +14,7 @@ type Stop = {
   detail: string;
   duration: string;
   tags?: string[];
+  booking?: { level: "required" | "recommended" | "none"; label: string; note?: string };
 };
 
 type Day = {
@@ -47,20 +48,21 @@ const days: Day[] = [
       { time: "12:00", kind: "住宿", place: "抵达大连 · 入住星海广场", detail: "放行李、补水休息。华住会优先看星海广场漫心、全季星海会展中心；旺季房价波动大，尽早锁可取消价。", duration: "1h", tags: ["华住会", "行李"] },
       { time: "13:15", kind: "午餐", place: "日月昇渔家菜（星海公园店）", order: "海肠捞饭＋鲅鱼水饺＋软炸肉", detail: "就在住宿片区解决第一顿，海肠捞饭在这里吃最顺路。连锁老店、菜量大，口味稳定度比“专程追小馆”更适合落地日。", duration: "1.5h", tags: ["必吃", "人均约 ¥90–130"] },
       { time: "15:10", kind: "游玩", place: "付家庄海滨浴场", detail: "海边慢走，作为旅程开场；天气闷热就把停留压缩到 40 分钟。", duration: "50m", tags: ["看海"] },
-      { time: "16:20", kind: "游玩", place: "莲花山观景台", detail: "坐缆车俯瞰星海湾。大风停运或排队超过 40 分钟，直接跳过不影响后面日落。", duration: "1.2h", tags: ["缆车", "可跳过"] },
+      { time: "16:20", kind: "游玩", place: "莲花山健身步道 → 免费观景凉亭", detail: "不买小火车套票，走健身步道约 15–25 分钟上山，再拐进侧面免费观景凉亭拍跨海大桥。若体力不足或天气闷热，直接跳过，把时间留给海边日落。", duration: "1.2h", tags: ["视频优化", "免费路线"], booking: { level: "none", label: "无需预约／门票", note: "小火车和观景台票属于可选消费，主线走免费步道。" } },
       { time: "18:00", kind: "游玩", place: "银沙滩 → 跨海大桥观景点", detail: "银沙滩拍照后前往大桥观景点，至少在日落前 40 分钟抵达。", duration: "2h", tags: ["日落重点"] },
       { time: "20:20", kind: "晚餐", place: "喜鼎海胆水饺（星海店）", order: "海胆水饺＋三鲜焖子；午餐吃撑则只点一份水饺", detail: "离住处近，晚归不用再横穿市区。它偏精致和游客友好，价格高于普通饺子馆，建议少点。", duration: "1h", tags: ["顺路", "人均约 ¥90–150"] },
     ],
   },
   {
     id: "d2", date: "8/5", weekday: "周三", city: "大连", title: "东海岸、老街与港口夜", subtitle: "从菱角湾一路向北收尾东港",
-    tip: "亚桥咖喱的分量偏实在；晚上日丰园不要重复点普通海鲜，重点吃海肠水饺。",
+    tip: "老虎滩片区不要自驾，直接坐地铁 5 号线；滨海路这一段按燕窝岭 → 北大桥走，更省体力。",
     stops: [
       { time: "08:00", kind: "早餐", place: "酒店早餐", order: "粥／面＋鸡蛋，别吃太撑", detail: "今天海边步行多，早餐在酒店解决最省时间。", duration: "40m", tags: ["省时"] },
-      { time: "09:00", kind: "游玩", place: "菱角湾 → 渔人码头", detail: "先拍老虎滩彩色建筑，再去渔人码头看灯塔和渔船；两处顺路，不来回折返。", duration: "3h", tags: ["海岸", "拍照"] },
-      { time: "12:30", kind: "午餐", place: "亚桥咖喱（中山区门店）", order: "炸鸡排咖喱饭／芝士咖喱饭，辣度保守选", detail: "经营年头久、咖喱浓郁，属于大连本地年轻人会反复吃的类型。不是地方菜，但如果喜欢日式咖喱，值得安排一顿。", duration: "1.2h", tags: ["值得吃", "人均约 ¥35–55"] },
-      { time: "14:10", kind: "游玩", place: "南山风情街 · 七七街", detail: "咖啡、老洋房和树荫街道，下午走起来比正午海边舒服。", duration: "2h", tags: ["Citywalk"] },
-      { time: "16:40", kind: "游玩", place: "东港 → 威尼斯水城", detail: "先走港浦路海边，傍晚再进水城；亮灯后看一圈即可，不必久留。", duration: "2.5h", tags: ["夜景"] },
+      { time: "09:00", kind: "游玩", place: "菱角湾 → 渔人码头", detail: "坐地铁 5 号线到老虎滩片区，不自驾。先拍菱角湾彩色建筑；到渔人码头别扎堆房子正面，去对面小吃摊一侧拍码头全貌、欧风渔港和黑色礁石。", duration: "2h", tags: ["视频优化", "地铁 5 号线"], booking: { level: "none", label: "无需门票" } },
+      { time: "11:10", kind: "游玩", place: "燕窝岭 → 北大桥滨海栈道", detail: "按视频建议反向走：从燕窝岭往北大桥，整体以下坡为主；穿防滑运动鞋，烈日或雨后湿滑时缩短路段。", duration: "1.3h", tags: ["下坡省力", "山海栈道"], booking: { level: "none", label: "无需门票" } },
+      { time: "12:50", kind: "午餐", place: "亚桥咖喱（中山区门店）", order: "炸鸡排咖喱饭／芝士咖喱饭，辣度保守选", detail: "经营年头久、咖喱浓郁，属于大连本地年轻人会反复吃的类型。不是地方菜，但如果喜欢日式咖喱，值得安排一顿。", duration: "1.2h", tags: ["值得吃", "人均约 ¥35–55"] },
+      { time: "14:30", kind: "游玩", place: "中山广场 → 南山风情街 · 七七街", detail: "先绕中山广场看百年欧式建筑，再步行约 600 米进入南山。下午光线更适合拍老建筑；南山树荫、咖啡和杂货铺适合慢走。", duration: "2h", tags: ["Citywalk", "百年建筑"], booking: { level: "none", label: "无需门票" } },
+      { time: "17:00", kind: "游玩", place: "东港 → 威尼斯水城", detail: "先走港浦路海边，等傍晚亮灯后再进水城；白天观感普通，亮灯后看一圈即可，贡多拉只在真想坐时现场决定。", duration: "2.2h", tags: ["亮灯后再去"], booking: { level: "none", label: "街区免票", note: "贡多拉游船另收费，非必选。" } },
       { time: "19:30", kind: "晚餐", place: "日丰园海肠水饺", order: "海肠水饺＋黄花鱼丸汤＋时令小菜", detail: "大连代表性很强的一顿，和中午咖喱不重复；热门时先线上取号。", duration: "1.5h", tags: ["必吃", "人均约 ¥80–120"] },
       { time: "21:10", kind: "甜品", place: "元叶丰茶", order: "酒酿米麻薯／厚蛋糕奶茶二选一", detail: "只当饭后甜品，不要把大杯奶茶当水喝。", duration: "35m", tags: ["可选"] },
     ],
@@ -70,10 +72,10 @@ const days: Day[] = [
     tip: "鳗乐道不是大连特色，只有真想吃日料自助才保留；否则换成品海楼或附近大连老菜。",
     stops: [
       { time: "08:30", kind: "早餐", place: "天颜过桥米线", order: "鸡肉砂锅米线＋卤蛋，先尝原汤再加辣", detail: "老牌米线、汤底浓，网上口碑长期稳定。早午餐吃最合适，避开正午排队。", duration: "1h", tags: ["值得吃", "人均约 ¥20–35"] },
-      { time: "10:00", kind: "游玩", place: "黑石礁海岸 → 大连自然博物馆", detail: "海边与室内组合，8 月中午前完成户外部分；博物馆遇预约限制就只走海岸。", duration: "2h", tags: ["雨天也可"] },
+      { time: "10:00", kind: "游玩", place: "黑石礁海岸 → 大连自然博物馆", detail: "海边与室内组合，8 月中午前完成户外部分。大连市级博物馆个人参观已取消预约，带本人有效身份证件，遇限流则先走海岸。", duration: "2h", tags: ["雨天也可", "带身份证"], booking: { level: "none", label: "免票免预约", note: "个人参观带有效身份证件；团队另行联系馆方。" } },
       { time: "12:40", kind: "午餐", place: "鳗乐道 · 活鳗料理", order: "活烤鳗鱼＋三文鱼＋甜虾；少拿炸物", detail: "优势是约 200 元档自助选择多，不足是并非大连独有、容易占掉两小时。想吃就安排这天，不想吃可直接替换。", duration: "2h", tags: ["有条件推荐", "约 ¥194–218"] },
-      { time: "15:20", kind: "游玩", place: "201 路有轨电车 → 劳动公园", detail: "坐一小段老电车感受城市，再进公园散步；不是硬核景点，节奏松。", duration: "1.8h", tags: ["城市体验"] },
-      { time: "17:30", kind: "游玩", place: "中山广场 → 港东五街", detail: "看老建筑，再到港东五街等轮船与城市同框；没有大船就当普通海边散步。", duration: "1.5h", tags: ["顺路"] },
+      { time: "15:20", kind: "游玩", place: "201 路有轨电车 → 劳动公园", detail: "坐一小段老电车感受城市，再进劳动公园散步。想看城市全景可现场加绿山缆车；前一天已登莲花山则不必重复登高。", duration: "1.8h", tags: ["城市体验", "不重复登高"], booking: { level: "none", label: "公园免票", note: "缆车为现场可选项目。" } },
+      { time: "17:30", kind: "游玩", place: "港东五街", detail: "等轮船与城市同框；没有大船就当普通海边散步，不为一张照片长时间空等。", duration: "1.2h", tags: ["顺路", "不硬等"] },
       { time: "19:30", kind: "晚餐", place: "品海楼（中山区门店）", order: "海菜包子＋老板鱼炖豆腐＋一道时蔬", detail: "补一顿大连家常海鲜，菜量不小；两个人不要再点海鲜大拼盘。", duration: "1.3h", tags: ["大连老菜", "人均约 ¥90–140"] },
     ],
   },
@@ -120,7 +122,7 @@ const days: Day[] = [
     stops: [
       { time: "08:30", kind: "早餐", place: "酒店早餐", order: "粥／面＋鸡蛋，少油", detail: "退房、寄存或直接带行李去洗浴，提前电话确认大件行李存放。", duration: "50m", tags: ["退房"] },
       { time: "10:00", kind: "交通", place: "前往沐里沐外（天惠国际店）", detail: "相比清河半岛更适合返京日，离市区和交通枢纽更容易控制时间。", duration: "45m", tags: ["主方案"] },
-      { time: "11:00", kind: "游玩", place: "沐里沐外洗浴", detail: "洗澡 → 搓澡 → 泡池 → 汗蒸 → 午餐 → 午睡。门票、搓澡和餐饮通常分开计价，以当日团购为准。", duration: "6h", tags: ["必去", "最后一站"] },
+      { time: "11:00", kind: "游玩", place: "沐里沐外洗浴", detail: "洗澡 → 搓澡 → 泡池 → 汗蒸 → 午餐 → 午睡。门票、搓澡和餐饮通常分开计价，以当日团购为准。", duration: "6h", tags: ["必去", "最后一站"], booking: { level: "recommended", label: "建议前一晚购票", note: "先确认票种、营业时间和大件行李存放；不是景区实名预约。" } },
       { time: "12:30", kind: "午餐", place: "洗浴内午餐", order: "东北菜／简餐＋水果，不点过量", detail: "先吃正餐再休息，避免只吃免费水果。", duration: "1h", tags: ["馆内解决"] },
       { time: "17:00", kind: "晚餐", place: "洗浴内轻食", order: "面／饺子，赶车则打包", detail: "17:30 前结账离场，按沈阳站车次至少预留 2 小时。", duration: "45m", tags: ["返京前"] },
       { time: "18:00", kind: "交通", place: "前往沈阳站 · 返回北京", detail: "建议 20:30 后车次；若从沈阳北站出发，再多留 20–30 分钟。", duration: "3h+", tags: ["返京"] },
@@ -151,6 +153,19 @@ const foodReviews = [
   { name: "Just Start Coffee", score: "4.1", level: "氛围优先", price: "¥35–65", area: "沈阳西塔", order: "黑芝麻维也纳、黑芝麻雪冰", verdict: "与西塔主线高度顺路，适合下午休息拍照；来自用户提供的小红书笔记线索。" },
 ];
 
+const swapOptions = [
+  { category: "地方", city: "大连", name: "棒棰岛", use: "替换 D3 黑石礁半日", time: "半天", booking: "建议提前购票", level: "recommended", note: "海滩更干净、适合挖沙和慢走；旺季先查当日开放与交通。和老虎滩、金石滩不要塞在同一天。" },
+  { category: "地方", city: "大连", name: "金石滩地质公园＋黄金海岸", use: "替换完整 D3", time: "一整天", booking: "建议提前购套票", level: "recommended", note: "适合想看海蚀地貌和玩水的人；离市区远，一旦采用就整天交给金石滩，不再保留市区老电车线。" },
+  { category: "地方", city: "大连", name: "发现王国夜场", use: "接在金石滩之后", time: "傍晚至夜间", booking: "建议提前购票", level: "recommended", note: "只有选择金石滩整日版且仍有体力时再加；先查夜场开放、烟花和设备检修信息。" },
+  { category: "地方", city: "大连", name: "旅顺口＋旅顺博物馆＋老铁山", use: "替换完整 D3", time: "一整天", booking: "博物馆个人免预约", level: "none", note: "适合历史兴趣更强的人。旅顺距离市区较远；博物馆带身份证，老铁山等收费点出发前查票务。" },
+  { category: "地方", city: "大连", name: "老虎滩海洋公园", use: "亲子／海洋馆替换项", time: "4–6 小时", booking: "建议提前购票", level: "recommended", note: "本次主线只经过老虎滩片区，不进海洋馆。若采用，坐地铁 5 号线，不自驾去停车。" },
+  { category: "地方", city: "大连", name: "西安路夜市", use: "替换任一大连晚餐", time: "1.5–2 小时", booking: "无需门票", level: "none", note: "选择多但踩雷概率也高；优先排队明显、现做现卖的摊位，不要和海鲜正餐叠加。" },
+  { category: "美食", city: "大连", name: "西安路小吃组合", use: "替换 D2 或 D3 晚餐", time: "1 餐", booking: "无需预约", level: "none", note: "海胆饺子、三鲜焖子、铁板鱿鱼、烤生蚝中选 2–3 样分食；不要每样都买大份。" },
+  { category: "美食", city: "大连", name: "渔人码头海鲜馆", use: "替换 D2 亚桥咖喱", time: "1 餐", booking: "热门店建议取号", level: "recommended", note: "想把咖喱换成本地海鲜时使用，优先海胆饺子和当日小海鲜；先问清时价、加工方式和份量。" },
+  { category: "美食", city: "大连", name: "品海楼／附近大连老菜", use: "替换 D3 鳗乐道", time: "1 餐", booking: "饭点建议取号", level: "recommended", note: "更符合本地特色，但 D3 晚餐已经安排品海楼；替换午餐后，晚餐改成米线、焖子或清淡小吃，避免重复。" },
+  { category: "美食", city: "沈阳", name: "鸡架饭／鸡架小吃", use: "替换 D5 金多咖喱", time: "1 餐", booking: "无需预约", level: "none", note: "如果不想大连、沈阳连续吃两顿咖喱，用鸡架类正好补一顿沈阳味。" },
+];
+
 const baths = [
   { id: "muli", name: "沐里沐外", price: "¥228–288", score: 86, location: "浑南 · 市区相对近", vibe: "设计感、年轻、适合返京日", food: "餐饮另算为主", sleep: "可休息／是否过夜看票种", best: "本行程首选", accent: "coral" },
   { id: "qinghe", name: "清河半岛", price: "¥238–298", score: 96, location: "沈北 · 距市区远", vibe: "体量最大、温泉度假感强", food: "套餐可能含餐，以团购为准", sleep: "适合整天或过夜", best: "8/9 提前版", accent: "blue" },
@@ -160,6 +175,9 @@ const baths = [
 const checklist = ["身份证与返京车票", "大连→沈阳高铁票", "华住会旺季可取消订单", "防晒、帽子、墨镜", "薄外套（海边晚风）", "防滑拖鞋／泳衣", "洗浴过夜小包", "充电宝与肠胃药"];
 
 const sources = [
+  { label: "大连合法但不太正常的行为 · 小红书", href: "http://xhslink.cn/o/Ywvef7JKQv" },
+  { label: "大连现状与三天路线 · 小红书", href: "http://xhslink.cn/o/8NrhqYELyRa" },
+  { label: "大连旅游注意事项 · 哔哩哔哩", href: "https://b23.tv/u0GjSYB" },
   { label: "杨草莓熊 · 沈阳甜品视频", href: "https://www.bilibili.com/video/BV1CVZtB8E6t/" },
   { label: "杨草莓熊 · 大连面包视频", href: "https://www.bilibili.com/video/BV1bFreB1EjG/" },
   { label: "大连松弛看海笔记", href: "http://xhslink.cn/o/4s4dVH6LrNC" },
@@ -261,6 +279,7 @@ export default function Home() {
                     <div className="stop-head"><span className={`kind ${stop.kind}`}>{stop.kind}</span><button aria-label={`收藏 ${stop.place}`} className={saved.includes(stop.place) ? "saved" : ""} onClick={() => toggle(stop.place, saved, setSaved, "trip-2026-saved")}>{saved.includes(stop.place) ? "♥" : "♡"}</button></div>
                     <h3>{stop.place}</h3>
                     {stop.order && <div className="order-box"><small>点单</small><b>{stop.order}</b></div>}
+                    {stop.booking && <div className={`booking-note ${stop.booking.level}`}><strong>{stop.booking.level === "required" ? "需提前预约" : stop.booking.level === "recommended" ? "提前安排" : "票务"}</strong><span>{stop.booking.label}</span>{stop.booking.note && <small>{stop.booking.note}</small>}</div>}
                     <p>{stop.detail}</p>
                     <div className="card-actions">
                       <div>{stop.tags?.map((tag) => <span key={tag}>{tag}</span>)}</div>
@@ -310,7 +329,30 @@ export default function Home() {
               </article>
             ))}
           </div>
-          <div className="source-box"><span>杨草莓熊 & 参考链接</span><p>已确认两条 B 站公开视频；沈阳当期视频未在网页标题公开店名，因此没有把评论区店名冒充成博主推荐，临行前请按视频内字幕复核。</p>{sources.map((source) => <a key={source.href} href={source.href} target="_blank" rel="noreferrer">{source.label}<b>↗</b></a>)}</div>
+          <div className="source-box"><span>视频与参考链接</span><p>大连主线已按三条新视频重新对照；沈阳甜品视频未在网页标题公开店名，因此没有把评论区店名冒充成博主推荐。</p>{sources.map((source) => <a key={source.href} href={source.href} target="_blank" rel="noreferrer">{source.label}<b>↗</b></a>)}</div>
+        </section>
+      )}
+
+      {section === "swap" && (
+        <section className="content-section">
+          <div className="section-title"><span>SWAP POOL</span><h2>没进主线的备选池</h2><p>按“替换”使用，不往主线继续叠加；地方和美食放在一起，临时换更方便</p></div>
+          <aside className="booking-summary">
+            <span>预约结论</span>
+            <h3>主线没有必须提前抢的景区票</h3>
+            <p>莲花山走免费步道；大连自然博物馆个人免票免预约、带身份证。沐里沐外建议前一晚确认票种。备选中的收费大景区在暑期建议提前购票，但都不是主线的硬性预约项。</p>
+          </aside>
+          <div className="swap-grid">
+            {swapOptions.map((item) => (
+              <article className="swap-card" key={item.name}>
+                <div className="swap-top"><span>{item.category} · {item.city}</span><b>{item.time}</b></div>
+                <h3>{item.name}</h3>
+                <div className="swap-use"><small>替换方式</small><strong>{item.use}</strong></div>
+                <div className={`swap-booking ${item.level}`}>{item.booking}</div>
+                <p>{item.note}</p>
+                <a href={navLink(item.name, item.city)} target="_blank" rel="noreferrer">打开地图 ↗</a>
+              </article>
+            ))}
+          </div>
         </section>
       )}
 
@@ -349,7 +391,7 @@ export default function Home() {
 
       <nav className="bottom-nav" aria-label="主要功能">
         {([
-          ["plan", "⌁", "日程"], ["map", "⌖", "地图"], ["food", "◌", "吃喝"], ["bath", "♨", "洗浴"], ["list", "✓", "清单"],
+          ["plan", "⌁", "日程"], ["map", "⌖", "地图"], ["food", "◌", "吃喝"], ["swap", "⇄", "备选"], ["bath", "♨", "洗浴"], ["list", "✓", "清单"],
         ] as [Section, string, string][]).map(([id, icon, label]) => <button key={id} className={section === id ? "active" : ""} onClick={() => setSection(id)}><i>{icon}</i><span>{label}</span></button>)}
       </nav>
     </main>
